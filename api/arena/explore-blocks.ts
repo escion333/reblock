@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getArenaAccessToken } from '../_arenaAuth'
+import { getArenaAccessToken } from '../_arenaAuth.js'
 
 const ARENA_API = 'https://api.are.na'
 const CACHE_TTL_MS = 180_000

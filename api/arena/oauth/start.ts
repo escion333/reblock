@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createArenaAuthorizeUrl, createOAuthState, setArenaStateCookie } from '../../_arenaAuth'
+import { createArenaAuthorizeUrl, createOAuthState, setArenaStateCookie } from '../../_arenaAuth.js'
 
 export default function handler(request: VercelRequest, response: VercelResponse) {
   if (request.method !== 'GET') {

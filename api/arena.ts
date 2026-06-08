@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getArenaAccessToken } from './_arenaAuth'
+import { getArenaAccessToken } from './_arenaAuth.js'
 
 type ResearchResult = {
   title: string

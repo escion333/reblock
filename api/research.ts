@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getServerEnv } from './_env'
+import { getServerEnv } from './_env.js'
 
 type ResearchBlock = {
   title: string

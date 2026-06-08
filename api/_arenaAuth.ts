@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getServerEnv } from './_env'
+import { getServerEnv } from './_env.js'
 
 const ARENA_API = 'https://api.are.na'
 const ARENA_AUTH_TOKEN_COOKIE = 'reblock_arena_token'

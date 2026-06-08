@@ -4,7 +4,7 @@ import {
   exchangeArenaCode,
   readArenaStateCookie,
   setArenaTokenCookie,
-} from '../../_arenaAuth'
+} from '../../_arenaAuth.js'
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
   if (request.method !== 'GET') {
