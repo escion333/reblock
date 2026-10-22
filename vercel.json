@@ -35,5 +35,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "excludeFiles": "{.env,.env.*,**/.env,**/.env.*}"
+    }
+  }
 }

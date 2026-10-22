@@ -44,7 +44,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
   }
 
   const topicResult = normalizeTopic(request.body?.topic)
-  if (!topicResult.ok) {
+  if (topicResult.ok === false) {
     return response.status(400).json({ error: topicResult.error })
   }
   const topic = topicResult.topic
