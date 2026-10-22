@@ -1,4 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { requireOperator } from './_security.js'
+import type { VercelRequest, VercelResponse } from './_types.js'
 import { getServerEnv } from './_env.js'
 
 type ResearchBlock = {
@@ -30,6 +31,8 @@ const MAX_CITATION_NOTE_CHARS = 180
 const MAX_TOPIC_CHARS = 80
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
+  if (!requireOperator(request, response)) return
+
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST')
     return response.status(405).json({ error: 'Method not allowed.' })

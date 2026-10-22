@@ -1,12 +1,8 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { requireOperator } from '../_security.js'
+import type { VercelRequest, VercelResponse } from '../_types.js'
 import { getArenaAccessToken } from '../_arenaAuth.js'
 
 const ARENA_API = 'https://api.are.na'
-const CACHE_TTL_MS = 180_000
-const CACHE_FILE = join('/tmp', 'reblock-arena-explore-blocks.json')
-
 type ExploreBlock = {
   id: number
   type: string
@@ -40,22 +36,12 @@ type ArenaSearchItem = {
   }
 }
 
-type ExploreCache = {
-  expiresAt: number
-  blocks: ExploreBlock[]
-}
-
 export default async function handler(request: VercelRequest, response: VercelResponse) {
+  if (!requireOperator(request, response)) return
+
   if (request.method !== 'GET') {
     response.setHeader('Allow', 'GET')
     return response.status(405).json({ error: 'Method not allowed.' })
-  }
-
-  const forceRefresh = request.query.refresh === '1' || request.query.refresh === 'true'
-  const cached = readExploreCache()
-  if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
-    response.setHeader('Cache-Control', 's-maxage=180, stale-while-revalidate=300')
-    return response.status(200).json({ blocks: cached.blocks, cached: true })
   }
 
   const apiKey = getArenaAccessToken(request)
@@ -86,33 +72,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
     Boolean(block),
   )
 
-  writeExploreCache({
-    expiresAt: Date.now() + CACHE_TTL_MS,
-    blocks,
-  })
-
-  response.setHeader('Cache-Control', forceRefresh ? 'no-store' : 's-maxage=180, stale-while-revalidate=300')
   return response.status(200).json({ blocks, cached: false })
-}
-
-function readExploreCache(): ExploreCache | null {
-  try {
-    if (!existsSync(CACHE_FILE)) {
-      return null
-    }
-
-    return JSON.parse(readFileSync(CACHE_FILE, 'utf8')) as ExploreCache
-  } catch {
-    return null
-  }
-}
-
-function writeExploreCache(cache: ExploreCache) {
-  try {
-    writeFileSync(CACHE_FILE, JSON.stringify(cache), 'utf8')
-  } catch {
-    // Cache writes are best-effort; the endpoint should still serve live data.
-  }
 }
 
 function normalizeBlock(item: ArenaSearchItem): ExploreBlock | null {

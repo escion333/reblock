@@ -28,3 +28,12 @@ Are.na publishing uses OAuth by default. A shared personal access token can only
 - `npm run dev` starts the local app.
 - `npm run build` type-checks and builds the client.
 - `npm run lint` runs ESLint, including the token guardrail for raw Tailwind color classes.
+
+## API access
+
+All API routes require operator HTTP Basic authentication (`BASIC_AUTH_USER` and
+`BASIC_AUTH_PASSWORD`); missing credentials deny access. The browser asks for
+these credentials when loading the Are.na connection. OAuth authenticates the
+Are.na account separately. API responses are private and never shared in CDN or
+filesystem caches. Supplied source URLs are validated but never fetched by this
+server. Production OAuth requires an explicit `ARENA_REDIRECT_URI`.

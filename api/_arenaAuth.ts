@@ -1,10 +1,10 @@
 import { randomBytes } from 'node:crypto'
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { VercelRequest, VercelResponse } from './_types.js'
 import { getServerEnv } from './_env.js'
 
 const ARENA_API = 'https://api.are.na'
-const ARENA_AUTH_TOKEN_COOKIE = 'reblock_arena_token'
-const ARENA_AUTH_STATE_COOKIE = 'reblock_arena_state'
+const ARENA_AUTH_TOKEN_COOKIE = process.env.VERCEL ? '__Host-reblock_arena_token' : 'reblock_arena_token'
+const ARENA_AUTH_STATE_COOKIE = process.env.VERCEL ? '__Host-reblock_arena_state' : 'reblock_arena_state'
 
 type ArenaTokenPayload = {
   access_token?: string
@@ -31,7 +31,8 @@ export function arenaRedirectUri(request: VercelRequest) {
     return configured
   }
 
-  const host = request.headers['x-forwarded-host'] ?? request.headers.host
+  if (process.env.VERCEL) throw new Error('ARENA_REDIRECT_URI is required on Vercel.')
+  const host = request.headers.host
   const proto = request.headers['x-forwarded-proto'] ?? 'http'
   return `${proto}://${host}/api/arena/oauth/callback`
 }
@@ -188,14 +189,16 @@ function getCookie(request: VercelRequest, name: string) {
     .map((part) => part.trim())
     .find((part) => part.startsWith(`${name}=`))
 
-  return match ? decodeURIComponent(match.slice(name.length + 1)) : undefined
+  try { return match ? decodeURIComponent(match.slice(name.length + 1)) : undefined }
+  catch { return undefined }
 }
 
-function serializeCookie(name: string, value: string, httpOnly: boolean, maxAge?: number) {
+function serializeCookie(name: string, value: string, httpOnly: boolean, maxAge: number = 28_800) {
   const parts = [
     `${name}=${encodeURIComponent(value)}`,
     'Path=/',
     'SameSite=Lax',
+    process.env.VERCEL ? 'Secure' : undefined,
     maxAge === undefined ? undefined : `Max-Age=${maxAge}`,
     httpOnly ? 'HttpOnly' : undefined,
   ].filter(Boolean)

@@ -42,7 +42,7 @@ const tokenGuardrail = {
 }
 
 export default defineConfig([
-  globalIgnores(['dist', 'node_modules']),
+  globalIgnores(['dist', 'node_modules', '.security-test']),
   {
     files: ['**/*.{ts,tsx}'],
     plugins: {

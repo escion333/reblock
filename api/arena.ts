@@ -1,4 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { publicSourceUrl, requireOperator } from './_security.js'
+import type { VercelRequest, VercelResponse } from './_types.js'
 import { getArenaAccessToken } from './_arenaAuth.js'
 
 type ResearchResult = {
@@ -39,6 +40,8 @@ type ArenaImage = {
 const ARENA_API = 'https://api.are.na'
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
+  if (!requireOperator(request, response)) return
+
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST')
     return response.status(405).json({ error: 'Method not allowed.' })
@@ -108,8 +111,14 @@ function isResearch(value: unknown): value is ResearchResult {
     typeof candidate.title === 'string' &&
     typeof candidate.channelSlug === 'string' &&
     typeof candidate.summary === 'string' &&
-    Array.isArray(candidate.blocks) &&
-    Array.isArray(candidate.imageQueries)
+    Array.isArray(candidate.blocks) && candidate.blocks.length <= 8 &&
+    candidate.blocks.every((block) => block && typeof block === 'object' && typeof block.title === 'string' && typeof block.body === 'string' &&
+      Array.isArray(block.sourceUrls) && block.sourceUrls.length <= 3 && block.sourceUrls.every((url) => typeof url === 'string' && publicSourceUrl(url))) &&
+    Array.isArray(candidate.sourceLinks) && candidate.sourceLinks.length <= 12 &&
+    candidate.sourceLinks.every((source) => source && typeof source === 'object' && typeof source.title === 'string' && typeof source.url === 'string' && publicSourceUrl(source.url)) &&
+    Array.isArray(candidate.imageQueries) && candidate.imageQueries.length <= 8 &&
+    candidate.imageQueries.every((query) => typeof query === 'string' && query.length <= 200) &&
+    JSON.stringify(value).length <= 64_000
   )
 }
 
@@ -167,7 +176,7 @@ async function collectVerifiedSourceLinks(sources: ResearchResult['sourceLinks']
   const seen = new Set<string>()
 
   for (const source of sources.slice(0, 10)) {
-    if (!source.url || seen.has(source.url) || !(await isReachableUrl(source.url))) {
+    if (!source.url || seen.has(source.url) || !publicSourceUrl(source.url)) {
       continue
     }
 
@@ -273,34 +282,6 @@ function arenaFetch(apiKey: string, path: string, init: RequestInit = {}) {
       ...init.headers,
     },
   })
-}
-
-async function isReachableUrl(url: string) {
-  try {
-    const head = await fetch(url, {
-      method: 'HEAD',
-      redirect: 'follow',
-      signal: AbortSignal.timeout(5000),
-    })
-
-    if (head.status >= 200 && head.status < 400) {
-      return true
-    }
-
-    if (head.status !== 403 && head.status !== 405) {
-      return false
-    }
-
-    const get = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      signal: AbortSignal.timeout(5000),
-    })
-
-    return get.status >= 200 && get.status < 400
-  } catch {
-    return false
-  }
 }
 
 function uniqueSlug(slug: string) {
